@@ -1,0 +1,10 @@
+EEPROM
+
+DM24C02A
+http://ww1.microchip.com/downloads/en/DeviceDoc/I2C%20Serial%20EE%20Family%20Data%20Sheet%2021930C.pdf
+
+ASIC
+
+DM1106EN
+DTM0660L
+http://www.kerrywong.com/blog/wp-content/uploads/2016/04/DTM0660DataSheet.pdf

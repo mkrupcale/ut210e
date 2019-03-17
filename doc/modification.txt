@@ -1,0 +1,43 @@
+﻿Overview
+
+
+https://github.com/bdlow/UT210E
+
+
+EEVblog
+
+
+pg 4
+https://www.eevblog.com/forum/testgear/a-look-at-the-uni-t-ut210e/75/
+
+flywheelz - pg 8 - DTM0660L
+https://www.eevblog.com/forum/testgear/a-look-at-the-uni-t-ut210e/msg1034969/#msg1034969
+
+milamber - pg 13 - EEPROM programmer 24C02A SOIC8 with TLC866A and SOIC8 adapter
+https://www.eevblog.com/forum/testgear/a-look-at-the-uni-t-ut210e/msg1073630/#msg1073630
+
+stj - pg 16 - DM1106
+https://www.eevblog.com/forum/testgear/a-look-at-the-uni-t-ut210e/msg1302533/#msg1302533
+
+ceut - pg 18 - 0x07-0x08 -> 0x2710
+https://www.eevblog.com/forum/testgear/a-look-at-the-uni-t-ut210e/msg1316832/#msg1316832
+
+Johnex - pg 20 - EEPROM programmer CH341A with SOIC8 adapter
+https://www.eevblog.com/forum/testgear/a-look-at-the-uni-t-ut210e/msg1423248/#msg1423248
+
+djQUAN - pg 25 - 210D
+https://www.eevblog.com/forum/testgear/a-look-at-the-uni-t-ut210e/msg1917047/#msg1917047
+
+
+Arduino codes
+
+
+https://ghostbin.com/paste/6akt4
+https://gist.github.com/VioletGiraffe/f962519bca91850c68abafb180fa5898
+
+
+CH341A Linux programmer
+
+
+ch341eeprom - libusb
+https://github.com/plumbum/ch341eeprom
