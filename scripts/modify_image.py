@@ -4,10 +4,15 @@
 # SPDX-License-Identifier: MIT
 # Copyright 2019 Matthew Krupcale <mkrupcale@matthewkrupcale.com>
 
+import copy
+
 from argparse import ArgumentParser, RawTextHelpFormatter
 from itertools import chain
 
-HEX_BYTE_FORMAT_STRING = "0x%02x"
+HEX_FORMAT_PREFIX = "0x"
+HEX_FORMAT_PREFIX_LEN = len(HEX_FORMAT_PREFIX)
+HEX_DIGITS_PER_BYTE = 2
+HEX_BYTE_FORMAT_STRING = HEX_FORMAT_PREFIX + "%0" + str(HEX_DIGITS_PER_BYTE) + "x"
 
 C24C02_NUM_BYTES = 2*2**10 / 8 # 2 Kbit EEPROM
 
@@ -290,15 +295,98 @@ def write_image(outfile, image):
         if b != C24C02_NUM_BYTES:
             raise RuntimeError("Image written should be %d bytes: %d bytes written" % (C24C02_NUM_BYTES, b))
 
+def byte_cmp(a1, a2, s1=None, s2=None, n=None):
+    """
+    Compares byte sequences a1 and a2 byte-by-byte
+
+    Arguments
+
+    a1, a2 : byte sequences
+    s1, s2 : comparison start offset indices
+    n : maximum number of bytes to compare
+
+    Returns
+
+    n : number of bytes compared
+    diffs : list of tuples
+            Byte offsets and corresponding byte values for each byte sequence
+            at each offset where the two differ
+    """
+    l1 = len(a1)
+    l2 = len(a2)
+    if s1 is None or s1 <= 0:
+        s1 = 0
+    if s2 is None or s2 <= 0:
+        s2 = 0
+    l1 -= s1
+    l2 -= s2
+    if l1 < 0:
+        raise ValueError("Start offset of byte sequence beyond sequence length for a1")
+    if l2 < 0:
+        raise ValueError("Start offset of byte sequence beyond sequence length for a2")
+    truncate, n = _truncate_lengths(l1, l2, n)
+    diffs = list()
+    for i in range(0, n):
+        if a1[s1+i] != a2[s2+i]:
+            diffs.append((i, a1[s1+i], a2[s2+i]))
+    return (n, diffs, truncate)
+
+def _truncate_lengths(l1, l2, n=None):
+    """
+    Finds the truncated length of l1 and l2, up to n
+
+    Returns
+
+    i : index (0, 1, 2)
+        Which, if any, length truncates the other, unless n limits both, or
+        the lengths are equal
+    l : truncated length
+    """
+    truncate = 0
+    if n is None:
+        if l1 < l2:
+            truncate = 1
+        elif l2 < l1:
+            truncate = 2
+        n = min(l1, l2)
+    else:
+        if l1 < l2 and n > l1:
+            truncate = 1
+        elif l2 < l1 and n > l2:
+            truncate = 2
+        n = min(n, l1, l2)
+    return (truncate, n)
+
+def _print_byte_diffs(diffs):
+    max_addr = 0
+    for d in diffs:
+        if d[0] > max_addr:
+            max_addr = d[0]
+    max_addr_len = len(hex(max_addr))-HEX_FORMAT_PREFIX_LEN
+    spaces_per_col = 2
+    col_spaces = ' ' * spaces_per_col
+    col_format = "{:^%d}" % (max_addr_len + HEX_FORMAT_PREFIX_LEN) + (col_spaces + "{:^%d}" % (HEX_FORMAT_PREFIX_LEN + HEX_DIGITS_PER_BYTE)) * 2
+    print(col_format.format("addr", "a1", "a2"))
+    total_len = max_addr_len + HEX_FORMAT_PREFIX_LEN * 3 + HEX_DIGITS_PER_BYTE * 2 + 2 * spaces_per_col
+    print('-' * total_len)
+    format_str = "0x%%0%dx" % max_addr_len + (col_spaces + "0x%02x") * 2
+    for d in diffs:
+        print(format_str % (d[0], d[1], d[2]))
+
 def main():
     args = parse_args()
     _validate_args(args)
     if args.verbose:
         print("Reading image '%s'" % args.original)
-    image = read_image(args.original)
+    original_image = read_image(args.original)
     if args.verbose:
         print("Validating OEM image '%s'" % args.original)
-    _validate_oem_image(image)
+    _validate_oem_image(original_image)
+    if args.verbose:
+        image = copy.deepcopy(original_image)
+    else:
+        # modify memory in place
+        image = original_image
     if args.verbose:
         print("Setting display counts to %d" % args.counts)
     modify_counts(image, args.counts)
@@ -323,6 +411,18 @@ def main():
     if args.verbose:
         print("Validating modified image size")
     _validate_image_size(image)
+    if args.verbose:
+        print("Byte differences:")
+        n, diffs, truncate = byte_cmp(original_image, image)
+        if n != C24C02_NUM_BYTES:
+            raise ValueError("Expected to compare %d bytes (got %d)" % (C24C02_NUM_BYTES, n))
+        if truncate != 0:
+            if truncate == 1:
+                which = "modified image by original image"
+            elif truncate == 2:
+                which = "original image by modified image"
+            raise ValueError("Unexpected truncation of %s during byte comparison" % which)
+        _print_byte_diffs(diffs)
     if args.verbose:
         print("Writing modified image '%s'" % args.modified)
     write_image(args.modified, image)
