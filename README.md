@@ -9,7 +9,7 @@ The Uni-T UT210E[1] is a cost-effective clamp multimeter. It has also been well-
 To install, clone this repo, and run `make`:
 
 ```
-git clone https://github.com/mkrupcale/ut210e.git
+git clone https://gitlab.com/mkrupcale/ut210e.git
 cd ut210e
 make
 ```
